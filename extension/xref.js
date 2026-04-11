@@ -133,19 +133,15 @@ function compare() {
 }
 
 function removePage(idx) {
-  currentPages.splice(idx, 1);
-  chrome.storage.local.set({ imdbxref_pages: currentPages }, () => {
-    renderPages(currentPages);
-    document.getElementById('results').style.display = 'none';
+  const updated = currentPages.filter((_, i) => i !== idx);
+  chrome.storage.local.set({ imdbxref_pages: updated }, () => {
+    if (chrome.runtime.lastError) console.error('XRef: remove page failed', chrome.runtime.lastError);
   });
 }
 
 function resetAll() {
-  currentPages = [];
   chrome.storage.local.remove('imdbxref_pages', () => {
-    renderPages([]);
-    document.getElementById('results').style.display = 'none';
-    allResults = [];
+    if (chrome.runtime.lastError) console.error('XRef: reset failed', chrome.runtime.lastError);
   });
 }
 
@@ -160,6 +156,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.imdbxref_pages) {
     currentPages = changes.imdbxref_pages.newValue || [];
     renderPages(currentPages);
-    if (currentPages.length >= 2) compare();
+    if (currentPages.length >= 2) {
+      compare();
+    } else {
+      document.getElementById('results').style.display = 'none';
+      allResults = [];
+    }
   }
 });
