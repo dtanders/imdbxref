@@ -33,8 +33,11 @@
     chrome.storage.local.get('imdbxref_pages', r => cb(r.imdbxref_pages || []));
   }
 
-  function setPages(pages, cb) {
-    chrome.storage.local.set({ imdbxref_pages: pages }, cb);
+  function setPages(pages, onSuccess, onError) {
+    chrome.storage.local.set({ imdbxref_pages: pages }, () => {
+      if (chrome.runtime.lastError) { onError?.(chrome.runtime.lastError); return; }
+      onSuccess?.();
+    });
   }
 
   // ── Toolbar ───────────────────────────────────────────────────────────────
@@ -95,11 +98,12 @@
 
   getPages(updateUI);
 
-  chrome.storage.onChanged.addListener((changes, area) => {
+  function onStorageChanged(changes, area) {
     if (area === 'local' && changes.imdbxref_pages) {
       updateUI(changes.imdbxref_pages.newValue || []);
     }
-  });
+  }
+  chrome.storage.onChanged.addListener(onStorageChanged);
 
   // ── Toast helper ──────────────────────────────────────────────────────────
   function showToast(msg, ms = 2000) {
@@ -112,15 +116,19 @@
   function doCollect() {
     const title = document.title.replace(/\s*[-|].*$/, '').trim() || location.href;
     const links = scrape();
+    const idMatch = location.href.match(/imdb\.com\/(name\/(nm\d+)|title\/(tt\d+))/);
+    const pageKey = idMatch ? (idMatch[2] || idMatch[3]) : location.pathname;
     getPages(pages => {
-      if (pages.some(p => p.title === title)) {
+      if (pages.some(p => p.pageKey === pageKey)) {
         showToast('Already collected');
         return;
       }
-      pages.push({ title, links });
+      pages.push({ title, links, pageKey });
       setPages(pages, () => {
         showToast(`✓ Collected (${pages.length})`);
         updateUI(pages);
+      }, () => {
+        showToast('Save failed — storage full');
       });
     });
   }
@@ -151,5 +159,8 @@
   });
 
   // ── Dismiss ───────────────────────────────────────────────────────────────
-  dismissBtn.addEventListener('click', () => toolbar.remove());
+  dismissBtn.addEventListener('click', () => {
+    chrome.storage.onChanged.removeListener(onStorageChanged);
+    toolbar.remove();
+  });
 })();
