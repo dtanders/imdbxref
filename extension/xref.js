@@ -96,11 +96,11 @@ function buildFilters(items) {
     const btn = document.createElement('button');
     btn.className = 'ftab';
     btn.textContent = label;
-    btn.onclick = () => {
+    btn.addEventListener('click', () => {
       tabs.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
       renderResults(filter === 'all' ? allResults : allResults.filter(e => e.type === filter));
-    };
+    });
     return btn;
   };
   const allTab = makeTab(`All (${items.length})`, 'all');
