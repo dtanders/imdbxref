@@ -155,7 +155,9 @@
 
   // ── Find Connections ──────────────────────────────────────────────────────
   compareBtn.addEventListener('click', () => {
-    chrome.runtime.sendMessage({ action: 'openXref' });
+    chrome.runtime.sendMessage({ action: 'openXref' }, _r => {
+      void chrome.runtime.lastError;
+    });
   });
 
   // ── Dismiss ───────────────────────────────────────────────────────────────

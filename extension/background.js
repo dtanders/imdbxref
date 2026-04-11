@@ -1,5 +1,10 @@
 let xrefTabId = null;
 
+// Rehydrate tab ID after service worker restart
+chrome.storage.session.get('xrefTabId', r => {
+  xrefTabId = r.xrefTabId ?? null;
+});
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg.action === 'openXref') {
     if (xrefTabId !== null) {
@@ -14,11 +19,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     } else {
       openNewXrefTab(sendResponse);
     }
-    return true; // keep message channel open for async response
-  }
-
-  if (msg.action === 'reset') {
-    chrome.storage.local.remove('imdbxref_pages', () => sendResponse({ ok: true }));
     return true;
   }
 });
@@ -26,10 +26,14 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 function openNewXrefTab(sendResponse) {
   chrome.tabs.create({ url: chrome.runtime.getURL('xref.html') }, tab => {
     xrefTabId = tab.id;
+    chrome.storage.session.set({ xrefTabId });
     sendResponse({ ok: true });
   });
 }
 
 chrome.tabs.onRemoved.addListener(tabId => {
-  if (tabId === xrefTabId) xrefTabId = null;
+  if (tabId === xrefTabId) {
+    xrefTabId = null;
+    chrome.storage.session.remove('xrefTabId');
+  }
 });

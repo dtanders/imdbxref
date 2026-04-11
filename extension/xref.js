@@ -62,7 +62,7 @@ function renderPages(pages) {
         <div class="slot-title">${esc(page.title)}</div>
         <div class="slot-count">${page.links.length} entities extracted</div>
       </div>
-      <button class="slot-clear" onclick="removePage(${i})" title="Remove">${CLOSE_SVG}</button>
+      <button class="slot-clear" data-idx="${i}" title="Remove">${CLOSE_SVG}</button>
     </div>`).join('');
 }
 
@@ -146,6 +146,13 @@ function resetAll() {
 }
 
 // ── Boot + live updates ───────────────────────────────────────────────────────
+document.getElementById('clearAllBtn').addEventListener('click', resetAll);
+document.getElementById('compareBtn').addEventListener('click', compare);
+document.getElementById('pageList').addEventListener('click', e => {
+  const btn = e.target.closest('[data-idx]');
+  if (btn) removePage(Number(btn.dataset.idx));
+});
+
 chrome.storage.local.get('imdbxref_pages', r => {
   currentPages = r.imdbxref_pages || [];
   renderPages(currentPages);
