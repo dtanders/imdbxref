@@ -3,11 +3,10 @@
 
   // ── Scrape ────────────────────────────────────────────────────────────────
   function scrape() {
-    const links = [];
-    const seen = {};
+    const byId = {};
     let sec = '';
-    (document.querySelector('main') || document.body).querySelectorAll('h4,a[href]').forEach(node => {
-      if (node.tagName === 'H4') {
+    (document.querySelector('main') || document.body).querySelectorAll('h3,h4,a[href]').forEach(node => {
+      if (node.tagName === 'H3' || node.tagName === 'H4') {
         const t = node.textContent.trim().replace(/\s+/g, ' ');
         if (t && t.length < 60) sec = t;
       } else {
@@ -16,14 +15,18 @@
           const id = m[2] || m[3];
           const type = m[2] ? 'name' : 'title';
           const name = node.textContent.trim().replace(/\s+/g, ' ');
-          if (name && name.length > 1 && !seen[id]) {
-            seen[id] = 1;
-            links.push({ id, type, name, url: `https://www.imdb.com/${type}/${id}/`, section: sec });
+          if (name && name.length > 1) {
+            if (byId[id]) {
+              if (name.length > byId[id].name.length) byId[id].name = name;
+              if (sec && !byId[id].sections.includes(sec)) byId[id].sections.push(sec);
+            } else {
+              byId[id] = { id, type, name, url: `https://www.imdb.com/${type}/${id}/`, sections: sec ? [sec] : [] };
+            }
           }
         }
       }
     });
-    return links;
+    return Object.values(byId);
   }
 
   // ── Storage helpers ───────────────────────────────────────────────────────

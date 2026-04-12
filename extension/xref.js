@@ -23,7 +23,7 @@ function runCompare(pages) {
     const best = candidates.reduce((a, b) => b.name.length > a.name.length ? b : a);
     return {
       id: best.id, type: best.type, name: best.name, url: best.url,
-      sections: candidates.map(c => c.section)
+      sections: [...new Set(candidates.flatMap(c => c.sections || (c.section ? [c.section] : [])))]
     };
   }).sort((a, b) => a.name.localeCompare(b.name));
 }
