@@ -3,9 +3,26 @@
 
   // ── Scrape ────────────────────────────────────────────────────────────────
   function scrape() {
+    const root = document.querySelector('main') || document.body;
+
+    // Pre-scan images: walk up from each img to its nearest entity-link ancestor
+    const imageMap = {};
+    root.querySelectorAll('img.ipc-image').forEach(img => {
+      const src = img.getAttribute('src') || '';
+      if (!src || src.startsWith('data:')) return;
+      let el = img.parentElement;
+      while (el && el !== root) {
+        if (el.tagName === 'A' && el.href) {
+          const m = el.href.match(/imdb\.com\/(name\/(nm\d+)|title\/(tt\d+))/);
+          if (m) { if (!imageMap[m[2] || m[3]]) imageMap[m[2] || m[3]] = src; break; }
+        }
+        el = el.parentElement;
+      }
+    });
+
     const byId = {};
     let sec = '';
-    (document.querySelector('main') || document.body).querySelectorAll('h3,h4,a[href]').forEach(node => {
+    root.querySelectorAll('h3,h4,a[href]').forEach(node => {
       if (node.tagName === 'H3' || node.tagName === 'H4') {
         const t = node.textContent.trim().replace(/\s+/g, ' ');
         if (t && t.length < 60) sec = t;
@@ -15,24 +32,18 @@
           const id = m[2] || m[3];
           const type = m[2] ? 'name' : 'title';
           const name = node.textContent.trim().replace(/\s+/g, ' ');
-          const imgEl = node.querySelector('img.ipc-image');
-          const image = imgEl ? imgEl.src : null;
           if (name && name.length > 1) {
             if (byId[id]) {
               if (name.length > byId[id].name.length) byId[id].name = name;
               if (sec && !byId[id].sections.includes(sec)) byId[id].sections.push(sec);
-              if (image && !byId[id].image) byId[id].image = image;
             } else {
-              byId[id] = { id, type, name, url: `https://www.imdb.com/${type}/${id}/`, sections: sec ? [sec] : [], image };
+              byId[id] = { id, type, name, url: `https://www.imdb.com/${type}/${id}/`, sections: sec ? [sec] : [], image: imageMap[id] || null };
             }
-          } else if (image) {
-            if (byId[id]) { if (!byId[id].image) byId[id].image = image; }
-            else byId[id] = { id, type, name: '', url: `https://www.imdb.com/${type}/${id}/`, sections: [], image };
           }
         }
       }
     });
-    return Object.values(byId);
+    return Object.values(byId).filter(e => e.name.length > 1);
   }
 
   // ── Storage helpers ───────────────────────────────────────────────────────
