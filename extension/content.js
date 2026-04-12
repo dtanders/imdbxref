@@ -14,13 +14,11 @@
         const m = node.href && node.href.match(/imdb\.com\/(name\/(nm\d+)|title\/(tt\d+))/);
         if (m) {
           const id = m[2] || m[3];
-          if (!seen[id]) {
+          const type = m[2] ? 'name' : 'title';
+          const name = node.textContent.trim().replace(/\s+/g, ' ');
+          if (name && name.length > 1 && !seen[id]) {
             seen[id] = 1;
-            const type = m[2] ? 'name' : 'title';
-            const name = node.textContent.trim().replace(/\s+/g, ' ');
-            if (name && name.length > 1) {
-              links.push({ id, type, name, url: `https://www.imdb.com/${type}/${id}/`, section: sec });
-            }
+            links.push({ id, type, name, url: `https://www.imdb.com/${type}/${id}/`, section: sec });
           }
         }
       }
