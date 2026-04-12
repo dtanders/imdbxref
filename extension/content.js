@@ -6,7 +6,7 @@
     const links = [];
     const seen = {};
     let sec = '';
-    document.body.querySelectorAll('h4,a[href]').forEach(node => {
+    (document.querySelector('main') || document.body).querySelectorAll('h4,a[href]').forEach(node => {
       if (node.tagName === 'H4') {
         const t = node.textContent.trim().replace(/\s+/g, ' ');
         if (t && t.length < 60) sec = t;
