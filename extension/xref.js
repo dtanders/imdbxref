@@ -23,6 +23,7 @@ function runCompare(pages) {
     const best = candidates.reduce((a, b) => b.name.length > a.name.length ? b : a);
     return {
       id: best.id, type: best.type, name: best.name, url: best.url,
+      image: candidates.find(c => c.image)?.image || null,
       sections: [...new Set(candidates.flatMap(c => c.sections || (c.section ? [c.section] : [])))]
     };
   }).sort((a, b) => a.name.localeCompare(b.name));
@@ -74,9 +75,12 @@ function renderResults(items) {
   }
   list.innerHTML = items.map(e => {
     const secs = e.sections ? [...new Set(e.sections.filter(Boolean))].join(' · ') : '';
+    const icon = e.image
+      ? `<img src="${esc(e.image)}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;" loading="lazy">`
+      : `<div class="result-icon ${e.type}">${e.type === 'name' ? PERSON_SVG : FILM_SVG}</div>`;
     return `
     <a class="result-item" href="${esc(e.url)}" target="_blank" rel="noopener">
-      <div class="result-icon ${e.type}">${e.type === 'name' ? PERSON_SVG : FILM_SVG}</div>
+      ${icon}
       <div class="result-info">
         <div class="result-name">${esc(e.name)}</div>
         <div class="result-type">${e.type === 'name' ? 'Person' : 'Title'}</div>

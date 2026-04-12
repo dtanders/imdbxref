@@ -15,13 +15,19 @@
           const id = m[2] || m[3];
           const type = m[2] ? 'name' : 'title';
           const name = node.textContent.trim().replace(/\s+/g, ' ');
+          const imgEl = node.querySelector('img.ipc-image');
+          const image = imgEl ? imgEl.src : null;
           if (name && name.length > 1) {
             if (byId[id]) {
               if (name.length > byId[id].name.length) byId[id].name = name;
               if (sec && !byId[id].sections.includes(sec)) byId[id].sections.push(sec);
+              if (image && !byId[id].image) byId[id].image = image;
             } else {
-              byId[id] = { id, type, name, url: `https://www.imdb.com/${type}/${id}/`, sections: sec ? [sec] : [] };
+              byId[id] = { id, type, name, url: `https://www.imdb.com/${type}/${id}/`, sections: sec ? [sec] : [], image };
             }
+          } else if (image) {
+            if (byId[id]) { if (!byId[id].image) byId[id].image = image; }
+            else byId[id] = { id, type, name: '', url: `https://www.imdb.com/${type}/${id}/`, sections: [], image };
           }
         }
       }
