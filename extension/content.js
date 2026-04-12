@@ -77,6 +77,13 @@
   const toast = document.createElement('span');
   toast.style.cssText = 'color:#888;font-size:12px;display:none;';
 
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = 'Clear';
+  clearBtn.style.cssText = `
+    background:none;border:1px solid #444;color:#888;font-weight:700;font-size:12px;
+    border-radius:6px;padding:4px 10px;cursor:pointer;display:none;
+  `;
+
   const dismissBtn = document.createElement('button');
   dismissBtn.textContent = '×';
   dismissBtn.style.cssText = `
@@ -84,7 +91,7 @@
     cursor:pointer;padding:0 2px;line-height:1;
   `;
 
-  toolbar.append(badge, countSpan, collectBtn, compareBtn, toast, dismissBtn);
+  toolbar.append(badge, countSpan, collectBtn, compareBtn, clearBtn, toast, dismissBtn);
   document.body.appendChild(toolbar);
 
   // ── Update UI from storage ────────────────────────────────────────────────
@@ -92,6 +99,7 @@
     const n = pages.length;
     countSpan.textContent = n ? `${n} collected` : '';
     compareBtn.style.display = n >= 2 ? '' : 'none';
+    clearBtn.style.display = n ? '' : 'none';
   }
 
   getPages(updateUI);
@@ -155,6 +163,13 @@
   compareBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'openXref' }, _r => {
       void chrome.runtime.lastError;
+    });
+  });
+
+  // ── Clear all ─────────────────────────────────────────────────────────────
+  clearBtn.addEventListener('click', () => {
+    chrome.storage.local.remove('imdbxref_pages', () => {
+      if (chrome.runtime.lastError) console.error('XRef: clear failed', chrome.runtime.lastError);
     });
   });
 
