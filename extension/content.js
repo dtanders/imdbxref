@@ -2,22 +2,19 @@
   if (document.getElementById('imdbxref-toolbar')) return;
 
   // ── Scrape ────────────────────────────────────────────────────────────────
+  function imgSrc(img) {
+    if (!img) return null;
+    // Use getAttribute to get raw attribute values (img.src resolves "" to page URL)
+    const src = img.getAttribute('src') || img.getAttribute('data-src') || '';
+    if (src && src.startsWith('http')) return src;
+    // Fall back to first URL in srcset
+    const srcset = img.getAttribute('srcset') || '';
+    const first = srcset.split(',')[0]?.trim().split(' ')[0] || '';
+    return first.startsWith('http') ? first : null;
+  }
+
   function scrape() {
     const root = document.querySelector('main') || document.body;
-
-    // Pre-scan images: any entity link that wraps an <img> → id→src
-    const imageMap = {};
-    root.querySelectorAll('a[href]').forEach(a => {
-      const m = a.href && a.href.match(/imdb\.com\/(name\/(nm\d+)|title\/(tt\d+))/);
-      if (!m) return;
-      const img = a.querySelector('img');
-      if (!img) return;
-      const id = m[2] || m[3];
-      if (imageMap[id]) return;
-      const src = img.src || img.getAttribute('data-src') || '';
-      if (src && !src.startsWith('data:')) imageMap[id] = src;
-    });
-
     const byId = {};
     let sec = '';
     root.querySelectorAll('h3,h4,a[href]').forEach(node => {
@@ -26,18 +23,17 @@
         if (t && t.length < 60) sec = t;
       } else {
         const m = node.href && node.href.match(/imdb\.com\/(name\/(nm\d+)|title\/(tt\d+))/);
-        if (m) {
-          const id = m[2] || m[3];
-          const type = m[2] ? 'name' : 'title';
-          const name = node.textContent.trim().replace(/\s+/g, ' ');
-          if (name && name.length > 1) {
-            if (byId[id]) {
-              if (name.length > byId[id].name.length) byId[id].name = name;
-              if (sec && !byId[id].sections.includes(sec)) byId[id].sections.push(sec);
-            } else {
-              byId[id] = { id, type, name, url: `https://www.imdb.com/${type}/${id}/`, sections: sec ? [sec] : [], image: imageMap[id] || null };
-            }
-          }
+        if (!m) return;
+        const id = m[2] || m[3];
+        const type = m[2] ? 'name' : 'title';
+        const name = node.textContent.trim().replace(/\s+/g, ' ');
+        const image = imgSrc(node.querySelector('img'));
+        if (byId[id]) {
+          if (name.length > byId[id].name.length) byId[id].name = name;
+          if (sec && !byId[id].sections.includes(sec)) byId[id].sections.push(sec);
+          if (image && !byId[id].image) byId[id].image = image;
+        } else {
+          byId[id] = { id, type, name, url: `https://www.imdb.com/${type}/${id}/`, sections: sec ? [sec] : [], image };
         }
       }
     });
