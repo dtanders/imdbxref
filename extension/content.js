@@ -5,19 +5,17 @@
   function scrape() {
     const root = document.querySelector('main') || document.body;
 
-    // Pre-scan images: walk up from each img to its nearest entity-link ancestor
+    // Pre-scan images: any entity link that wraps an <img> → id→src
     const imageMap = {};
-    root.querySelectorAll('img.ipc-image').forEach(img => {
-      const src = img.getAttribute('src') || '';
-      if (!src || src.startsWith('data:')) return;
-      let el = img.parentElement;
-      while (el && el !== root) {
-        if (el.tagName === 'A' && el.href) {
-          const m = el.href.match(/imdb\.com\/(name\/(nm\d+)|title\/(tt\d+))/);
-          if (m) { if (!imageMap[m[2] || m[3]]) imageMap[m[2] || m[3]] = src; break; }
-        }
-        el = el.parentElement;
-      }
+    root.querySelectorAll('a[href]').forEach(a => {
+      const m = a.href && a.href.match(/imdb\.com\/(name\/(nm\d+)|title\/(tt\d+))/);
+      if (!m) return;
+      const img = a.querySelector('img');
+      if (!img) return;
+      const id = m[2] || m[3];
+      if (imageMap[id]) return;
+      const src = img.src || img.getAttribute('data-src') || '';
+      if (src && !src.startsWith('data:')) imageMap[id] = src;
     });
 
     const byId = {};
