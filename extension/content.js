@@ -27,7 +27,7 @@
         const id = m[2] || m[3];
         const type = m[2] ? 'name' : 'title';
         const name = node.textContent.trim().replace(/\s+/g, ' ');
-        const image = imgSrc(node.querySelector('img'));
+        const image = imgSrc(node.closest('li').querySelector('img'));
         if (byId[id]) {
           if (name.length > byId[id].name.length) byId[id].name = name;
           if (sec && !byId[id].sections.includes(sec)) byId[id].sections.push(sec);
