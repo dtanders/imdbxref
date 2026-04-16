@@ -96,22 +96,32 @@ function buildFilters(items) {
   const titles = items.filter(e => e.type === 'title').length;
   const tabs   = document.getElementById('filterTabs');
   tabs.innerHTML = '';
-  const makeTab = (label, filter) => {
+  const makeTab = (label, filterFn) => {
     const btn = document.createElement('button');
     btn.className = 'ftab';
     btn.textContent = label;
     btn.addEventListener('click', () => {
       tabs.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
-      renderResults(filter === 'all' ? allResults : allResults.filter(e => e.type === filter));
+      renderResults(filterFn ? allResults.filter(filterFn) : allResults);
     });
     return btn;
   };
-  const allTab = makeTab(`All (${items.length})`, 'all');
+  const allTab = makeTab(`All (${items.length})`, null);
   allTab.classList.add('active');
   tabs.appendChild(allTab);
-  if (names)  tabs.appendChild(makeTab(`People (${names})`, 'name'));
-  if (titles) tabs.appendChild(makeTab(`Titles (${titles})`, 'title'));
+  if (names)  tabs.appendChild(makeTab(`People (${names})`, e => e.type === 'name'));
+  if (titles) tabs.appendChild(makeTab(`Titles (${titles})`, e => e.type === 'title'));
+
+  const sectionCounts = {};
+  for (const item of items) {
+    for (const sec of (item.sections || [])) {
+      if (sec) sectionCounts[sec] = (sectionCounts[sec] || 0) + 1;
+    }
+  }
+  for (const sec of Object.keys(sectionCounts).sort()) {
+    tabs.appendChild(makeTab(`${sec} (${sectionCounts[sec]})`, e => (e.sections || []).includes(sec)));
+  }
 }
 
 // ── State + actions ───────────────────────────────────────────────────────────

@@ -27,7 +27,7 @@
         const id = m[2] || m[3];
         const type = m[2] ? 'name' : 'title';
         const name = node.textContent.trim().replace(/\s+/g, ' ');
-        const image = imgSrc(node.closest('li').querySelector('img'));
+        const image = imgSrc(node.closest('li')?.querySelector('img'));
         if (byId[id]) {
           if (name.length > byId[id].name.length) byId[id].name = name;
           if (sec && !byId[id].sections.includes(sec)) byId[id].sections.push(sec);
@@ -98,6 +98,17 @@
     border-radius:6px;padding:4px 10px;cursor:pointer;display:none;
   `;
 
+  const warnSpan = document.createElement('span');
+  warnSpan.style.cssText = 'color:#f5c518;font-size:12px;display:none;';
+  warnSpan.textContent = 'Partial cast only';
+
+  const fullCastBtn = document.createElement('button');
+  fullCastBtn.textContent = 'Full Cast';
+  fullCastBtn.style.cssText = `
+    background:none;border:1px solid #f5c518;color:#f5c518;font-weight:700;font-size:12px;
+    border-radius:6px;padding:4px 10px;cursor:pointer;display:none;
+  `;
+
   const dismissBtn = document.createElement('button');
   dismissBtn.textContent = '×';
   dismissBtn.style.cssText = `
@@ -105,8 +116,19 @@
     cursor:pointer;padding:0 2px;line-height:1;
   `;
 
-  toolbar.append(badge, countSpan, collectBtn, compareBtn, clearBtn, toast, dismissBtn);
+  toolbar.append(badge, countSpan, collectBtn, compareBtn, clearBtn, warnSpan, fullCastBtn, toast, dismissBtn);
   document.body.appendChild(toolbar);
+
+  // ── Partial-cast warning ──────────────────────────────────────────────────
+  const titleMatch = location.href.match(/imdb\.com\/title\/(tt\d+)/);
+  const isFullCredits = /\/fullcredits/.test(location.href);
+  if (titleMatch && !isFullCredits) {
+    warnSpan.style.display = '';
+    fullCastBtn.style.display = '';
+    fullCastBtn.addEventListener('click', () => {
+      location.href = `https://www.imdb.com/title/${titleMatch[1]}/fullcredits`;
+    });
+  }
 
   // ── Update UI from storage ────────────────────────────────────────────────
   function updateUI(pages) {
